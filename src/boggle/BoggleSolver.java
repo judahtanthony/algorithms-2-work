@@ -27,7 +27,6 @@ public class BoggleSolver {
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
-        StdOut.printf("Board:\n%s\n\n", board);
         Set<String> words = new HashSet<String>();
         int rows = board.rows();
         int cols = board.cols();
@@ -53,6 +52,9 @@ public class BoggleSolver {
     // Returns the score of the given word if it is in the dictionary, zero otherwise.
     // (You can assume the word contains only the uppercase letters A through Z.)
     public int scoreOf(String word) {
+        if (!contains(word)) {
+            return 0;
+        }
         switch (word.length()) {
             case 0:
             case 1:
@@ -79,10 +81,7 @@ public class BoggleSolver {
         }
         else {
             int c = key.codePointAt(d) - 65;
-            x.next[c] = add(
-                    x.next[c],
-                    key,
-                    (c == 16 /* Q */ ? d + 2 : d + 1));
+            x.next[c] = add(x.next[c], key, d + 1);
         }
         return x;
     }
@@ -97,7 +96,12 @@ public class BoggleSolver {
         node = node.next[ci]; // Move node into sub-tree.
         buffer[d++] = (char) (ci + 65); // Add to our word buffer.
         // We have a 'Q'.  Let's donate a complimentary 'U' to it.
-        if (ci == 16) buffer[d++] = 'U';
+        if (ci == 16) {
+            // If it is a 'Q', ensure it is followed by a 'U';
+            if (node.next[20] == null) return;
+            node = node.next[20]; // Move node into sub-tree.
+            buffer[d++] = 'U';
+        }
         // We found a word!
         if (d >= 3 && node.isWord) words.add(new String(buffer, 0, d));
 
@@ -114,6 +118,19 @@ public class BoggleSolver {
         grid[i][j] = ci; // Free up this block to be used again.
     }
 
+    private boolean contains(String key) {
+        if (key == null) throw new IllegalArgumentException("argument to contains() is null");
+        Node x = get(dict, key, 0);
+        if (x == null) return false;
+        return x.isWord;
+    }
+
+    private Node get(Node x, String key, int d) {
+        if (x == null) return null;
+        if (d == key.length()) return x;
+        int c = key.charAt(d) - 65;
+        return get(x.next[c], key, d+1);
+    }
 
     public static void main(String[] args) {
         In in = new In(args[0]);
