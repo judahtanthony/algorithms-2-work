@@ -1,0 +1,4 @@
+.DS_Store
+.vscode
+# Github can't handle these big files.
+data
